@@ -1,0 +1,21 @@
+function [botScanAVR] = s_noise_detector(botSim)
+
+trials = 500
+botScan(:,1) = botSim.ultraScan()  
+for i=1:trials
+    botScan(:,i) = botSim.ultraScan()  
+end
+
+
+
+
+mean_vec= mean(botScan,2);
+errors = botScan - repmat(mean_vec,1,size(botScan,2));
+S = std(rot90(errors));
+
+[high_reading,position] = max(botScanAVR);
+
+
+
+
+end

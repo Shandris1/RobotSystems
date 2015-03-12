@@ -11,7 +11,7 @@ movement_step = 3;
 
 % botSim = BotSim(map,[0.01,0.005,0]);  %sets up a botSim object a map, and debug mode on.
 %botSim = BotSim(map,[0.1,0.1,0.01]);  %sets up a botSim object a map, and debug mode on.
-botSim = BotSim(map,[2,0,0]);
+botSim = BotSim(map,[10,0,0]);
 readings = 16
 botSim.setScanConfig(botSim.generateScanConfig(readings));
 
@@ -20,9 +20,9 @@ drawnow;
 %for i =1:200
 botSim.randomPose(10); %puts the robot in a random position at least 10cm away from a wall
 tic
-[test] = s_noise_detector(botSim);
+%[test] = s_noise_detector(botSim);
 resultsTime = toc
-%botSim.setBotPos([110 62]);
+botSim.setBotPos([110 62]);
 %botSim.setBotAng(pi/2);
 target = botSim.getRndPtInMap(10);  %gets random target.
 %target = [80 10];
