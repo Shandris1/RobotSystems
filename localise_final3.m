@@ -1,4 +1,4 @@
-function [mean_particle, mean_pos mean_ang] = localise_final3(botSim,map,target,readings)
+function [mean_particle, mean_pos mean_ang] = localise_final3(botSim,map,target,readings, noiselevel)
 %This function returns botSim, and accepts, botSim, a map and a target.
 %LOCALISE Template localisation function
 %If readings are not divisible by 4, the wall-following program will crash
@@ -12,17 +12,24 @@ max_dim = max([max(map(:,1))-min(map(:,1)) max(map(:,2))-min(map(:,2))]);
 %readings = 8;
 %generate some random particles inside the map
 num = round(450/330*max_dim); % number of particles
+%num = 10;
 particles(num,1) = BotSim; %how to set up a vector of objects
 mean_particle = BotSim(modifiedMap);
 mean_particle.setScanConfig(botSim.generateScanConfig(readings));
 chosen_particles(num,1) = BotSim(modifiedMap);   
 count_conv = 0;
+workspace = rand_wrokspace(map,num);
+noise = noiselevel + 7;
 
 for i=1:num
     particles(i) = BotSim(modifiedMap);  %each particle should use the same map as the botSim object
     chosen_particles(i) = BotSim(modifiedMap);
     chosen_particles(i).setScanConfig(botSim.generateScanConfig(readings));
-    particles(i).randomPose(5); %spawn the particles in random locations
+    %particles(i).randomPose(5); %spawn the particles in random locations
+    index_initial = round(rand(1)*(size(workspace,1)-1))+1;
+    particles(i).setBotPos([workspace(index_initial,:)]);
+    particles(i).setBotAng(2*pi*rand(1));
+    workspace(index_initial,:) = [];
     particles(i).setScanConfig(botSim.generateScanConfig(readings));
 end
 
@@ -36,17 +43,19 @@ sigma = 60;
 
 sigma_sense = 2;
 sigma_sense = 5;
-
+sigma_sense = (10 + noiselevel/2);
+blobcheck= 0;
 damping = 1/(readings*5);%this is amazing for sensor noise but takes too long
+damping = 1/(readings*7);%last version
 damping = 1/(readings*7);
-%damping = 0;
+damping = 0;
 converged_candidate = 0;
 countin_reinital = 0;
-cloudsize = 0.5; %radius of the respawn cloud about previous particles
+cloudsize = 0.5 + noiselevel*0.1; %radius of the respawn cloud about previous particles
 cloudangle = 4/180*pi; %angle of respawned particles
-closest = 7*readings;%5cm per reading
+closest = 8*readings;%5cm per reading
 botScan = botSim.ultraScan(); %get a scan from the real robot.
-wall_follow_dist = 15;
+wall_follow_dist = 15 + noiselevel;
 %botSim.move(botScan(1)-7);
 search_long =1;
 flag_random = 0;
@@ -110,6 +119,7 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
             end
             
             turn = 2*pi/readings*(max_ang_ind-1)+rand(1)*pi/9;
+             turn = 2*pi/readings*(max_ang_ind-1)+rand(1)*pi/18;
             botSim.turn(turn);
             search_long = 0;
             move = 5;
@@ -188,7 +198,7 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
         %%check if particle outside the map
         if (particles(i).insideMap == 0) 
             
-            if(min(botScan)>3)
+            if(min(botScan)>3+noiselevel/2)
             particles(i).randomPose(1);
 
             rand_pos = particles(i).getBotPos;
@@ -201,11 +211,11 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
             end
             else
                 particles(i).setBotPos([mean(par_pos(:,1)) mean(par_pos(:,2))] );
-               particles(i).setBotAng(-mean(par_ang));
+                particles(i).setBotAng(-mean(par_ang));
             end
                 
         end
-        if (sigma > 10*readings)&&(n>3)&&(flag_random == 0)
+        if (sigma > (noiselevel*0.8+ 5)*readings)&&(n>3)&&(flag_random == 0)
             particles(i).randomPose(1);
 
             rand_pos = particles(i).getBotPos;
@@ -232,11 +242,49 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
             counting = counting +1;
             circ_ind(counting) = i;
         end
-
-        error = normpdf((botScan - parScan),0,sigma_sense);
-        error_sort = sort(error);
-        %weight(i) = median(error_sort(1:0.75*length(error),1)) + damping;
-        weight(i) = mean(error_sort(1:end*2/8)) + damping;
+       
+        
+        
+        %%%weight determination
+        % using worst readings
+        %error = normpdf((botScan - parScan),0,sigma_sense);
+%         error = exp((-((botScan - parScan)).^2)/(2*(sigma_sense)^2));
+%         error_sort = sort(error);
+%          weight(i) = mean(error_sort(1:round(end*2/8)+1)) + damping;
+%         
+        
+%         %using mean of sep gauss
+%         
+%         error = normpdf((botScan - parScan),0,sigma_sense);
+%         weight(i) = mean(error) + damping;
+%        
+%         % using mean of iqr guass
+%         
+%         error = normpdf((botScan - parScan),0,sigma_sense);
+%         error_sort = sort(error);
+%         weight(i) = mean(error_sort(1:round(0.75*length(error)),1)) + damping;
+%         
+%         % using median of iqr guass
+%         
+%         error = normpdf((botScan - parScan),0,sigma_sense);
+%         weight(i) = median(error) + damping;
+%         
+        % using sum of error and do guass
+        
+        error = sum(abs(botScan - parScan));
+        weight(i) = exp((-(error)^2)/(2*(sigma_sense*readings*0.6)^2));
+       
+%         % using sum of error no gauss
+%         error = sum(abs(botScan - parScan));
+%         weight(i) = 1/(error + 1e-100000000000000);
+%         
+%         
+        
+%         
+%         error = normpdf((botScan - parScan),0,sigma_sense);
+%         error_sort = sort(error);
+%         weight(i) = median(error_sort(1:0.75*length(error),1)) + damping;
+        %weight(i) = mean(error_sort) + damping;
         dist(i)= sum((abs(parScan - botScan)));
       
     end
@@ -262,13 +310,13 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
             botSim.drawMap(); %drawMap() turns hold back on again, so you can draw the bots
             botSim.drawBot(30,'g'); %draw robot with line length 30 and green
             for i =1:num
-                if(particles(i).insideMap == 1)
+                %if(particles(i).insideMap == 1)
                     particles(i).drawBot(3); %draw particle with line length 3 and default color
-                end
+               % end
             end
 %              for i =1:counting
 %                 if(particles(i).insideMap == 1)
-%                     particles(circ_ind(i)).drawBot(5,'r'); %draw particle with line length 3 and default color
+%                     particles(circ_ind(i)).drawBot(15,'r'); %draw particle with line length 3 and default color
 %                 end
 %             end
             drawnow;
@@ -284,7 +332,13 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
 %        flag_random = 0;
 % 
 %     end
-    
+    if(6*sigmax < 0.25*max_dim)&&(6*sigmay < 0.25*max_dim)
+        blobcheck = 1
+        sigma_sense = 2 + noiselevel/4;
+    else
+        blobcheck = 0;
+        sigma_sense =10 + noiselevel/2;
+    end
     %% Write code for scoring your particles
     %%normalize weights
     weights = weight./sum(weight);
@@ -298,7 +352,7 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
         end
         %mean_pos = mean(par_pos);
         sort_weights = sort([weights' [1:num]']);
-        index_average = sort_weights(end/4:end,2);
+        index_average = sort_weights(round(end/4):end,2);
         mean_pos = mean(par_pos(index_average,:));
         %get weights sort them get IQR and then perform mean on those
         %indices
@@ -315,7 +369,7 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
         mean_particle.setBotAng(mean_ang);
         measurement = mean_particle.ultraScan();
         error_conv = sum((abs(measurement - botScan))./botScan)
-        if(sum((abs(measurement - botScan)))< 3*readings)
+        if(sum((abs(measurement - botScan)))< (3+noiselevel)*readings)
 %              if converged_candidate == 1
 %                  converged = 1;
 %                  n

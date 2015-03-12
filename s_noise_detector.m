@@ -11,8 +11,8 @@ end
 
 mean_vec= mean(botScan,2);
 errors = botScan - repmat(mean_vec,1,size(botScan,2));
-S = std(rot90(errors));
-Noise_level = mean (S);
+S = std(errors');
+Noise_level = max(S);
 
 
 

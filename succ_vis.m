@@ -17,7 +17,7 @@ children =[];
                 count = count +1;
 %                   xpos =child_x + offsetx -1;
 %                   ypos = rangey-offsety-child_y;
-                  h = floor(abs(adjacency_new(end-1,i)+ 1i*adjacency_new(end,i) - target(1) + 1i*target(2)));
+                  h = floor(abs(adjacency_new(end-1,i)+ 1i*adjacency_new(end,i) - target(1) - 1i*target(2)));
                   %h = abs(xpos+ 1i*ypos - (target(1) + 1i*target(2)));
                   g = gvalue + ceil(adjacency_new(node_no,i));
                   

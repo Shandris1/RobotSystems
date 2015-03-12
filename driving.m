@@ -1,4 +1,4 @@
-function [] = drivingtest(speed,distance)
+function [] = driving(speed,distance)
 % Setting up initial parameters
 mL   = MOTOR_A;
 mR  = MOTOR_C;
