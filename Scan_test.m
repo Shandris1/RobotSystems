@@ -13,7 +13,7 @@ mot.ResetPosition();  %only do this once at the start
 mot.SmoothStart = 1;
 
 %performs a 360 degree scan at 20% power with plotting on
-[rad ang] = ultraScan(mot,30,16)
+[rad ang] = ultraScan(mot,45,180)
 
 % plots the results
 polar(ang/(360)*2*pi,rad,'r');

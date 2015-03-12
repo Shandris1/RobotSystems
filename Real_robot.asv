@@ -3,10 +3,7 @@ clc;        %clears console
 clear;      %clears workspace
 close all
 
-COM_CloseNXT all;  
-h = COM_OpenNXT();
-COM_SetDefaultNXT(h);
-
+robotStart()
 axis equal; %keeps the x and y scale the same
 map=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105];  %default map
 %map=[0,0;60,0;60,50;100,50;70,0;110,0;150,80;30,80;30,40;0,80]; %long map
@@ -21,17 +18,17 @@ botSim = BotSim(map,[2,0,0]);
 readings = 16
 Scan_number = readings;
 
-botSim.drawMap();
-%drawnow;
+%botSim.drawMap();
+drawnow;
 %botSim.setBotPos([110 62]);
 %botSim.setBotAng(pi/2);
 target = botSim.getRndPtInMap(10);  %gets random target.
 %target = [80 10];
-%plot(target(:,1),target(:,2),'x');
+plot(target(:,1),target(:,2),'x');
  %starts timer
 tic
 %your localisation function is called here.
-[returnedBot pos ang] = localise_final3_real(botSim,map,target,readings,noiselevel); %Where the magic happens
+[returnedBot pos ang] = localise_final3_real(botSim,map,target,readings); %Where the magic happens
 %close_array = map_obstacle(map,1,1);
 
 out = visbil_full(map,botSim,target);
@@ -56,7 +53,7 @@ botSim.drawBot(3,'g');
 %refreshdata(h2,'caller')
 drawnow
 end
-%plot(target(:,1),target(:,2),'x','MarkerSize', 20);
+plot(target(:,1),target(:,2),'x','MarkerSize', 20);
  %stops timer
 %end
 resultsTime = toc

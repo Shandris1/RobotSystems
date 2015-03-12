@@ -1,4 +1,4 @@
-function [mean_particle, mean_pos mean_ang] = localise_final3_real(botSim,map,target,readings, noiselevel)
+function [mean_particle, mean_pos mean_ang] = localise_final3(botSim,map,target,readings, noiselevel)
 %This function returns botSim, and accepts, botSim, a map and a target.
 %LOCALISE Template localisation function
 %If readings are not divisible by 4, the wall-following program will crash
@@ -9,6 +9,7 @@ modifiedMap = map; %you need to do this modification yourself
 botSim.setMap(modifiedMap);
 draw = 1
 max_dim = max([max(map(:,1))-min(map(:,1)) max(map(:,2))-min(map(:,2))]);
+angle = [];
 %readings = 8;
 %generate some random particles inside the map
 num = round(450/330*max_dim); % number of particles
@@ -20,6 +21,7 @@ chosen_particles(num,1) = BotSim(modifiedMap);
 count_conv = 0;
 workspace = rand_wrokspace(map,num);
 noise = noiselevel + 7;
+speed = 40;
 
 for i=1:num
     particles(i) = BotSim(modifiedMap);  %each particle should use the same map as the botSim object
@@ -54,7 +56,7 @@ countin_reinital = 0;
 cloudsize = 0.5 + noiselevel*0.1; %radius of the respawn cloud about previous particles
 cloudangle = 4/180*pi; %angle of respawned particles
 closest = 8*readings;%5cm per reading
-botScan = botSim.ultraScan(); %get a scan from the real robot.
+[botScan angle] = ultraScan(); %get a scan from the real robot.
 wall_follow_dist = 15 + noiselevel;
 %botSim.move(botScan(1)-7);
 search_long =1;
@@ -129,7 +131,7 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
         end
         if(botScan(1) > wall_follow_dist)||(max_found)
         move = 5;
-        botSim.move(move);
+        driving(move);
         search_long = 0;
         max_found = 0;
         flag_move = 1;

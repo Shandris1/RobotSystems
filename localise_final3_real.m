@@ -1,4 +1,4 @@
-function [mean_particle, mean_pos mean_ang] = localise_final3_real(botSim,map,target,readings, noiselevel)
+function [mean_particle, mean_pos mean_ang] = localise_final3(botSim,map,target,readings, noiselevel)
 %This function returns botSim, and accepts, botSim, a map and a target.
 %LOCALISE Template localisation function
 %If readings are not divisible by 4, the wall-following program will crash
@@ -9,6 +9,7 @@ modifiedMap = map; %you need to do this modification yourself
 botSim.setMap(modifiedMap);
 draw = 1
 max_dim = max([max(map(:,1))-min(map(:,1)) max(map(:,2))-min(map(:,2))]);
+angle = [];
 %readings = 8;
 %generate some random particles inside the map
 num = round(450/330*max_dim); % number of particles
@@ -18,18 +19,23 @@ mean_particle = BotSim(modifiedMap);
 mean_particle.setScanConfig(botSim.generateScanConfig(readings));
 chosen_particles(num,1) = BotSim(modifiedMap);   
 count_conv = 0;
-workspace = rand_wrokspace(map,num);
+%workspace = rand_wrokspace(map,num);
 noise = noiselevel + 7;
+speed = 40;
+mot = NXTMotor('B');
+scanSpeed = 45;
+samples = 16;
+OpenUltrasonic(SENSOR_4);
 
 for i=1:num
     particles(i) = BotSim(modifiedMap);  %each particle should use the same map as the botSim object
     chosen_particles(i) = BotSim(modifiedMap);
     chosen_particles(i).setScanConfig(botSim.generateScanConfig(readings));
-    %particles(i).randomPose(5); %spawn the particles in random locations
-    index_initial = round(rand(1)*(size(workspace,1)-1))+1;
-    particles(i).setBotPos([workspace(index_initial,:)]);
-    particles(i).setBotAng(2*pi*rand(1));
-    workspace(index_initial,:) = [];
+    particles(i).randomPose(5); %spawn the particles in random locations
+%     index_initial = round(rand(1)*(size(workspace,1)-1))+1;
+%     particles(i).setBotPos([workspace(index_initial,:)]);
+%     particles(i).setBotAng(2*pi*rand(1));
+%     workspace(index_initial,:) = [];
     particles(i).setScanConfig(botSim.generateScanConfig(readings));
 end
 
@@ -54,8 +60,8 @@ countin_reinital = 0;
 cloudsize = 0.5 + noiselevel*0.1; %radius of the respawn cloud about previous particles
 cloudangle = 4/180*pi; %angle of respawned particles
 closest = 8*readings;%5cm per reading
-botScan = botSim.ultraScan(); %get a scan from the real robot.
-wall_follow_dist = 15 + noiselevel;
+[botScan angle] = ultraScan(mot,scanSpeed,readings) %get a scan from the real robot.
+wall_follow_dist = 10 + noiselevel;
 %botSim.move(botScan(1)-7);
 search_long =1;
 flag_random = 0;
@@ -120,7 +126,7 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
             
             turn = 2*pi/readings*(max_ang_ind-1)+rand(1)*pi/9;
              turn = 2*pi/readings*(max_ang_ind-1)+rand(1)*pi/18;
-            botSim.turn(turn);
+            turning(speed,turn);
             search_long = 0;
             move = 5;
             max_found = 1;
@@ -129,7 +135,7 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
         end
         if(botScan(1) > wall_follow_dist)||(max_found)
         move = 5;
-        botSim.move(move);
+        driving(speed,move);
         search_long = 0;
         max_found = 0;
         flag_move = 1;
@@ -183,11 +189,11 @@ while(converged == 0 && n < maxNumOfIterations) %%particle filter loop
          par_ang(i) =    mod((par_ang(i)+2*pi),2*pi);
     end
     
-    sigmax = std(par_pos(:,1))
-    sigmay = std(par_pos(:,2))
-    sigmaang  = std(par_ang)
+    sigmax = std(par_pos(:,1));
+    sigmay = std(par_pos(:,2));
+    sigmaang  = std(par_ang);
     
-    botScan = botSim.ultraScan(); %get a scan from the real robot.
+    [botScan angle] = ultraScan(mot,scanSpeed,readings) %get a scan from the real robot.
     %min_bot_scan = min(botScan);
     %% Write code for updating your particles scans
     %%check measurements using p(z|r) in ideal case std is v small in reality
