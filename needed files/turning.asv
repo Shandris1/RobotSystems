@@ -7,13 +7,7 @@ mA.ActionAtTachoLimit = 'Brake'; % Want precise movment
 mC.ActionAtTachoLimit = 'Brake';
 
 
-angle = mod(angle+ 2*pi,2*pi)
-
-if  angle > pi
-     %so it can be send negative values as well
-     angle = 2*pi -angle
-    speed = speed * -1;
-end
+mod(angle+2*pi,2*pi)
 % 
 % if angle < 0 || angle > pi
 %     angle = abs (angle); %so it can be send negative values as well

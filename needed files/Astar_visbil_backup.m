@@ -1,5 +1,5 @@
 %function [move_commands turn_commands optimal] = Astar_visbil(currentPos,currentAng,target,closed,stepsize,robot)
-function [output_move output_angle optimal] = Astar_visbil(currentPos,currentAng, adjacency,map,robot,stepsize,target_real,dist,map_real)
+function [output_move output_angle optimal] = Astar_visbil(currentPos,currentAng, adjacency,map,robot,stepsize)
 %check that it is divisble by max range
 
 %to do
@@ -9,8 +9,7 @@ function [output_move output_angle optimal] = Astar_visbil(currentPos,currentAng
 target = adjacency(end-1:end,1);
 %target is always node 2;
 %start point is always node 1
-adjacency_new = visbil_point_reduced(map,currentPos ,adjacency,dist,map_real);
-temp_current =adjacency_new(end-1:end,1);
+adjacency_new = visbil_point(map,currentPos ,adjacency);
 
 open = [];
 % open format
@@ -57,7 +56,7 @@ size_closed = 0;
 open_count = 1;
  node_no = 1;
  node_par = 1;
-open(open_count,:) = [ node_no node_par floor(abs( (temp_current(1) + 1i*temp_current(2)) - (target(1) +1i*target(2)))) 0 floor(abs( (temp_current(1) + 1i*temp_current(2)) - (target(1) +1i*target(2)))) ];
+open(open_count,:) = [ node_no node_par floor(abs( (currentPos(1) + 1i*currentPos(2)) - (target(1) +1i*target(2)))) 0 floor(abs( (currentPos(1) + 1i*currentPos(2)) - (target(1) +1i*target(2)))) ];
 %shortest path method
 condition =1;
 
@@ -129,40 +128,32 @@ if(~nosol)
     
     
 end
-%check if target and start are what is written in adjcency map
-optimal = [adjacency_new(end-1,1) adjacency_new(end,1); optimal(end:-1:1,:)];
-if( roundn(currentPos(1),-5) ~= roundn(adjacency_new(end-1,1),-5))||( roundn(currentPos(2),-5) ~= roundn(adjacency_new(end,1),-5))
-optimal = [currentPos(1)  currentPos(2) ;optimal];
-end
-if( roundn(target_real(1),-5) ~= roundn(adjacency_new(end-1,2),-5))||( roundn(target_real(2),-5) ~= roundn(adjacency_new(end,2),-5))
-optimal = [optimal; target_real(1)  target_real(2)];
-end
 
-x_diff = diff(optimal(:,1));
-y_diff = diff(optimal(:,2));
+x_diff = diff([currentPos(1); flip(optimal(:,1))]);
+%optimal(end:-1:1,:,:); 
+y_diff = diff([currentPos(2); flip(optimal(:,2))]);%optimal(end:-1:1,:,:); 
 
 
 
-move_commands = abs(real(x_diff) + 1j.*real(y_diff));
-turn_commands = atan2(real(y_diff),real(x_diff));
+move_commands = abs(x_diff + 1j.*y_diff);
+turn_commands = atan2(y_diff,x_diff);
 
 %move in steps of 5
 if (stepsize == 0)
     output_move = move_commands;
     output_angle = turn_commands;
 else
-output_move = [];
+output = [];
 output_angle = [];
 for iteration = 1: size(move_commands,1)
-    last = mod(move_commands(iteration), stepsize);
-    steps_needed = round((move_commands(iteration)-last)/stepsize);
-    
+    steps_needed = round(move_commands(iteration)/stepsize);
+    last = mod(move_commands, stepsize);
     if(roundn(last,-5) == 0)
         
         last =[];
     end
-    output_move = [output_move ;repmat(stepsize,steps_needed,1); last];
-    output_angle = [ output_angle; repmat(turn_commands(iteration),steps_needed + size(last,1),1)];
+    output_move = [output ;repmat(stepsize,steps_needed,1); last];
+    output_angle = [ output_angle; repmat(turn_commands,steps_needed + size(last,1),1)];
     
 end
 end

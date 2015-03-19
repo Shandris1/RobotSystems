@@ -3,6 +3,9 @@ function [] = driving(speed,distance)
 mL   = MOTOR_A;
 mR  = MOTOR_C;
 bothMotors  = [mL; mR];
+if (distance < 0)
+   speed = speed*-1; 
+end
 %turning distance in cm into motor degrees
 drivingDist  = round(distance * 27.7) ; % in motor degrees
 % creating a driving object

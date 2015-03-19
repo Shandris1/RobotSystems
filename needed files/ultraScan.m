@@ -45,18 +45,19 @@ test = 0;
     end
     
     radii(radii>30) = radii(radii>30) +2;
-   
+    mLeft.WaitFor();
                 
           
-    mRight.WaitFor();
+    
     data = mLeft.ReadFromNXT(); % doesn't matter which object we use to read!
     pos  = -data.Position;
-    
+    mRight.WaitFor();
     %% copy pasted code
     
     % where are we?
     data = mLeft.ReadFromNXT(); % doesn't matter which object we use to read!
     pos  = -data.Position;
+    mRight.WaitFor();
     mLeft.TachoLimit = 360;
     %radii2(1) = GetUltrasonic(SENSOR_4);
     %reading_point = reading_point - (360/samples);
@@ -67,7 +68,7 @@ test = 0;
     j=1;
     while (reading == 0)
         data = mLeft.ReadFromNXT(); % doesn't matter which object we use to read!
-        pos  = -data.Position;
+        pos  = -data.Position
         reading_point(j+1);
         if( pos <= reading_point(j+1))
             radii2(j) = GetUltrasonic(SENSOR_4);
@@ -77,18 +78,31 @@ test = 0;
            
             
                    
-        if(j == samples)
+        if(j == samples - 1)
             reading = 1;
         end
         j = j+1; 
        end
     end
+     radii2(j) = 300;
      radii2(radii2>30) = radii2(radii2>30) +2;
      radii2 = (radii2(end:-1:1));
     mLeft.WaitFor();
-    %mLeft.TachoLimit = abs(pos);
-    radii;
-    radii2;
+
+    result = min([radii radii2],[],2);
     angles = 0 : (360/samples): 360- (360/samples);
-     %mLeft.SendToNXT();
-    % mLeft.WaitFor();
+     data = mLeft.ReadFromNXT(); %read current encoder value
+    pos  = -data.Position
+    if (pos<0)
+    mSlow   = NXTMotor(port, 'Power', -10, 'ActionAtTachoLimit', 'Brake');
+    mSlow.TachoLimit = abs(pos);
+    mSlow.SendToNXT();
+    
+    elseif (pos>0)
+    mSlow   = NXTMotor(port, 'Power', 10, 'ActionAtTachoLimit', 'Brake');
+    mSlow.TachoLimit = abs(pos);
+    mSlow.SendToNXT();
+    
+    else
+    end
+    mSlow.WaitFor();
