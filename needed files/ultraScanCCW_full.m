@@ -1,4 +1,4 @@
-function [ radii2, angles] = ultraScanCCW(scanSpeed,samples)
+function [radii, radii2, angles] = ultraScanCCW_full(scanSpeed,samples)
 %motor.stop('Brake'); %cancels any previous movement that may be happening
 
 
@@ -6,7 +6,7 @@ port  = MOTOR_B;
 dist = round(360/samples);
 
 mLeft   = NXTMotor(port, 'Power', scanSpeed, 'ActionAtTachoLimit', 'Brake');
-mRight  = NXTMotor(port, 'Power', -100, 'ActionAtTachoLimit', 'Brake');
+mRight  = NXTMotor(port, 'Power', -scanSpeed, 'ActionAtTachoLimit', 'Brake');
 
 mLeft.Stop('off');
 radii = zeros(samples,1); %preallocate the matrix
@@ -20,39 +20,38 @@ test = 0;
     pos  = -data.Position;
     mRight.TachoLimit = 360;
     mRight.SendToNXT();
-    radii(1) = GetUltrasonic(SENSOR_4);
-%     reading = 0;
-%     %reading_point = 0;
-%     j=1;
-%    % reading_point = reading_point + (360/samples);
-%     reading_point = 0 : (360/samples): 360- (360/samples);
-%             
-%      
-%     while (reading == 0)
-%         data = mRight.ReadFromNXT(); % doesn't matter which object we use to read!
-%         pos  = -data.Position;
-%         if( pos >= reading_point(j))
-%             radii(j) = GetUltrasonic(SENSOR_4);
-%              pos  = -data.Position;
-%         reading_point(j);
-%                     
-%        if(j == samples)
-%             reading = 1;
-%        end
-%        j = j+1;
-%         end
-%         test = test+1;
-%         
-%     end
-%     
-%     radii(radii>30) = radii(radii>30) +2;
-%     mLeft.WaitFor();
-%                 
-%           
-%     
-%     data = mLeft.ReadFromNXT(); % doesn't matter which object we use to read!
-%     pos  = -data.Position;
-%     mRight.WaitFor();
+    reading = 0;
+    %reading_point = 0;
+    j=1;
+   % reading_point = reading_point + (360/samples);
+    reading_point = 0 : (360/samples): 360- (360/samples);
+            
+     
+    while (reading == 0)
+        data = mRight.ReadFromNXT(); % doesn't matter which object we use to read!
+        pos  = -data.Position;
+        if( pos >= reading_point(j))
+            radii(j) = GetUltrasonic(SENSOR_4);
+             pos  = -data.Position;
+        reading_point(j);
+                    
+       if(j == samples)
+            reading = 1;
+       end
+       j = j+1;
+        end
+        test = test+1;
+        
+    end
+    
+    radii(radii>30) = radii(radii>30) +2;
+    mLeft.WaitFor();
+                
+          
+    
+    data = mLeft.ReadFromNXT(); % doesn't matter which object we use to read!
+    pos  = -data.Position;
+    mRight.WaitFor();
     %% copy pasted code
     
     % where are we?
@@ -106,3 +105,4 @@ test = 0;
     mSlow.WaitFor();
     else
     end
+    

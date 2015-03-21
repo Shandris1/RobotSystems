@@ -1,11 +1,11 @@
 port  = MOTOR_B;
 
 
-mLeft   = NXTMotor(port, 'Power', 100, 'ActionAtTachoLimit', 'Brake');
-mRight  = NXTMotor(port, 'Power', -100, 'ActionAtTachoLimit', 'Brake');
+mLeft   = NXTMotor(port, 'Power', -100, 'ActionAtTachoLimit', 'Brake');
+mRight  = NXTMotor(port, 'Power', 100, 'ActionAtTachoLimit', 'Brake');
     
 i=0;
-mLeft.ResetPosition();
+%mLeft.ResetPosition();
     mLeft.Stop('off');
     
     while (i<2)
