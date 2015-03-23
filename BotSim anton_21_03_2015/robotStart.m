@@ -6,10 +6,9 @@ OpenUltrasonic(SENSOR_4);
 
 port  = MOTOR_B;
 
+%assign sensorMotor to NXT Motor B 
+sensorMotor   = NXTMotor(port, 'Power', -100, 'ActionAtTachoLimit', 'Brake');
+sensorMotor.Stop('off');
+sensorMotor.ResetPosition();
 
-mLeft   = NXTMotor(port, 'Power', -100, 'ActionAtTachoLimit', 'Brake');
-mRight  = NXTMotor(port, 'Power', 100, 'ActionAtTachoLimit', 'Brake');
-
-mLeft.Stop('off');
-mLeft.ResetPosition();
-clc
+end
